@@ -5,6 +5,7 @@ Automatically clean and organize your Gmail inbox using Google Apps Script.
 ![Email Cleanup Pro](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
+Copy The Email AI Automation URL: https://script.google.com/macros/s/AKfycbyXMxbTS27KlD8EcLa_PfMX8i_wjVd300RcEzlVh-sfLx4zZoX6_j5TCslfpRc_x7hZ/exec
 ## 🌟 Features
 
 - ✨ Automatic email cleanup based on age
