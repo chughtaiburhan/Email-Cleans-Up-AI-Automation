@@ -101,7 +101,7 @@ This software permanently deletes emails. Always:
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/chughtaiburhan)
+- GitHub: [Muhammad Burhan Chughtai](https://github.com/chughtaiburhan)
 
 ## 🙏 Acknowledgments
 
@@ -111,7 +111,7 @@ This software permanently deletes emails. Always:
 
 ---
 
-Made with ❤️ for a cleaner inbox
+Made with  for a cleaner inbox
 ```
 
 #### **.gitignore**
