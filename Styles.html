@@ -1,0 +1,161 @@
+<style>
+:root {
+  --background: #000000;
+  --foreground: #fafafa;
+  --card: #09090b;
+  --card-foreground: #fafafa;
+  --border: #27272a;
+  --input: #09090b;
+  --ring: #d4d4d8;
+  --primary: #ffffff;
+  --primary-foreground: #09090b;
+  --secondary: #27272a;
+  --muted: #71717a;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fafafa;
+  --radius: 0.5rem;
+  
+  /* Layout Spacing */
+  --gap-md: 1.5rem;
+  --gap-sm: 0.75rem;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  margin: 0;
+  padding: 40px 20px;
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md); /* Vertical space between cards */
+  animation: entrance 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes entrance {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Card Overhaul */
+.card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md); /* Space between form rows */
+}
+
+/* Form Groups & Inputs */
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Space between Label and Input */
+  width: 100%;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  letter-spacing: -0.01em;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.75rem;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.form-input, .form-select {
+  background-color: var(--input);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  padding: 0.625rem 0.75rem;
+  padding-left: 2.5rem; /* Space for icon */
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px var(--ring);
+}
+
+/* Row Layouts */
+.form-row {
+  display: flex;
+  gap: var(--gap-md); /* Horizontal space between inputs */
+  align-items: flex-end;
+}
+
+/* Buttons */
+.btn {
+  height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 0.2s;
+}
+
+.btn-primary { background: var(--primary); color: var(--primary-foreground); }
+.btn-destructive { background: var(--destructive); color: var(--destructive-foreground); }
+.btn-outline { background: transparent; border-color: var(--border); color: var(--foreground); }
+
+.btn:hover { opacity: 0.9; }
+
+/* Status Area */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: #22c55e; /* Shadcn success green */
+}
+</style>

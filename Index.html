@@ -4,163 +4,161 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Automatically clean and organize your Gmail inbox with ease">
-  <title>Email Cleanup Pro - Smart Gmail Automation</title>
-
-  <?!= HtmlService.createHtmlOutputFromFile('styles').getContent(); ?>
+  <title>Email Cleanup Pro</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <?!= include('styles'); ?>
 </head>
-
-<body>
+<body class="dark">
   <div class="container">
-
-    <!-- Hero Header -->
     <header class="header">
-      <div class="header-icon">📧</div>
-      <h1 class="header-title">Email Cleanup Pro</h1>
-      <p class="header-description">Intelligent email management powered by automation</p>
-      <div class="header-tags">
-        <span class="tag">Smart</span>
-        <span class="tag">Secure</span>
-        <span class="tag">Simple</span>
+      <div class="logo-area">
+        <i data-lucide="mail" class="icon-primary"></i>
       </div>
+      <h1 class="header-title">Email Cleanup Pro</h1>
+      <p class="header-description">Advanced inbox automation with surgical precision.</p>
     </header>
 
-    <!-- Alerts -->
-    <div id="alertSuccess" class="alert alert-success">
-      <span class="alert-icon">✓</span>
+    <div class="stats-container">
+      <div class="stat-item">
+        <div class="stat-header">
+          <i data-lucide="activity" class="icon-sm"></i>
+          <p>Processed Today</p>
+        </div>
+        <h3 id="statsToday">0</h3>
+      </div>
+    </div>
+
+    <div id="alertSuccess" class="alert alert-success" style="display:none;">
+      <i data-lucide="check-circle" class="icon-sm"></i>
       <span class="alert-message"></span>
     </div>
-    <div id="alertError" class="alert alert-error">
-      <span class="alert-icon">✕</span>
+    <div id="alertError" class="alert alert-error" style="display:none;">
+      <i data-lucide="alert-triangle" class="icon-sm"></i>
       <span class="alert-message"></span>
     </div>
 
-    <!-- Settings Card -->
-    <div class="card card-elevated" style="margin-bottom: 1.5rem;">
+    <div class="card">
       <div class="card-header">
-        <div class="card-header-content">
-          <div class="card-icon">⚙️</div>
-          <div>
-            <h2 class="card-title">Configuration</h2>
-            <p class="card-description">Customize your email cleanup preferences</p>
-          </div>
+        <div class="title-with-icon">
+          <i data-lucide="settings-2" class="icon-sm"></i>
+          <h2 class="card-title">Configuration</h2>
         </div>
-        <span class="badge badge-primary">Active</span>
       </div>
 
       <div class="card-content">
-
-        <!-- ROW 1 -->
         <div class="form-row">
-
-          <!-- Days Old -->
-          <div class="form-group">
-            <label class="form-label" for="daysOld">
-              <span class="label-icon">📆</span>
-              Delete emails older than (days)
-            </label>
-            <input type="number" id="daysOld" class="form-input" value="30" min="1" max="365">
-            <span class="form-hint">Emails older than this will be processed</span>
+          <div class="form-item">
+            <label class="form-label">Days Old</label>
+            <div class="input-wrapper">
+              <i data-lucide="calendar" class="input-icon"></i>
+              <input type="number" id="daysOld" class="form-input" value="30">
+            </div>
           </div>
-
-          <!-- ✅ Batch Size (INSERTED HERE) -->
-          <div class="form-group">
-            <label class="form-label" for="batchSize">
-              <span class="label-icon">📦</span>
-              Batch Size
-            </label>
-            <input
-              type="number"
-              id="batchSize"
-              class="form-input"
-              value="100"
-              min="1"
-              max="500"
-            >
-            <span class="form-hint">
-              Number of emails processed per run (recommended: 50–200)
-            </span>
+          <div class="form-item">
+            <label class="form-label">Batch Size</label>
+            <div class="input-wrapper">
+              <i data-lucide="layers" class="input-icon"></i>
+              <input type="number" id="batchSize" class="form-input" value="100">
+            </div>
           </div>
-
-          <!-- Action -->
-          <div class="form-group">
-            <label class="form-label" for="action">
-              <span class="label-icon">🎯</span>
-              Action
-            </label>
-            <select id="action" class="form-select">
-              <option value="trash">🗑️ Move to Trash</option>
-              <option value="archive">📦 Archive</option>
-            </select>
-          </div>
-
-        </div>
-
-        <!-- Search Query -->
-        <div class="form-group">
-          <label class="form-label" for="searchQuery">
-            <span class="label-icon">🔍</span>
-            Search Query
-            <span class="label-badge">Advanced</span>
-          </label>
-          <input type="text" id="searchQuery" class="form-input" value="older_than:30d">
-          <div class="form-hint">
-            <strong>Examples:</strong>
-            <div class="hint-examples">
-              <code>category:promotions older_than:30d</code>
-              <code>from:newsletter@example.com older_than:60d</code>
-              <code>larger:5M older_than:90d</code>
+          <div class="form-item">
+            <label class="form-label">Default Action</label>
+            <div class="input-wrapper">
+              <i data-lucide="mouse-pointer-click" class="input-icon"></i>
+              <select id="action" class="form-select">
+                <option value="trash">Trash</option>
+                <option value="archive">Archive</option>
+              </select>
             </div>
           </div>
         </div>
 
-        <div class="divider"></div>
-
-        <!-- Automation -->
-        <div class="form-row">
-
-          <div class="form-group">
-            <label class="form-label" for="frequency">
-              <span class="label-icon">⏰</span>
-              Automatic Schedule
-            </label>
-            <select id="frequency" class="form-select">
-              <option value="none">🚫 Disabled</option>
-              <option value="daily">📅 Daily at 2 AM</option>
-              <option value="weekly">📆 Weekly (Monday)</option>
-            </select>
+        <div class="form-item">
+          <label class="form-label">Search Query</label>
+          <div class="input-wrapper">
+            <i data-lucide="search" class="input-icon"></i>
+            <input type="text" id="searchQuery" class="form-input" placeholder="category:promotions older_than:30d">
           </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <span class="label-icon">🔌</span>
-              Enable Automatic Cleanup
-            </label>
-            <div class="toggle-wrapper">
-              <label class="toggle">
-                <input type="checkbox" id="enabled">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-status" id="toggleStatus">Disabled</span>
-            </div>
-          </div>
-
         </div>
 
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="saveSettings()">
-            💾 Save Settings
-          </button>
-          <button class="btn btn-outline" onclick="loadSettings()">
-            🔄 Reload
-          </button>
+        <div class="footer-actions">
+           <div class="status-toggle">
+            <label class="toggle">
+              <input type="checkbox" id="enabled">
+              <span class="toggle-slider"></span>
+            </label>
+            <span id="toggleStatus">Disabled</span>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-outline" onclick="previewEmails()">
+              <i data-lucide="eye" class="icon-xs"></i> Preview
+            </button>
+            <button class="btn btn-primary" onclick="saveSettings()">
+              <i data-lucide="save" class="icon-xs"></i> Save Changes
+            </button>
+          </div>
         </div>
-
       </div>
     </div>
 
+    <div class="card border-destructive">
+      <div class="card-header">
+        <div class="title-with-icon">
+          <i data-lucide="zap" class="icon-sm text-destructive" style="color:#ef4444"></i>
+          <h2 class="card-title">Manual Execution</h2>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="form-row">
+          <div class="form-item">
+            <label class="form-label">Count</label>
+            <div class="input-wrapper">
+              <i data-lucide="hash" class="input-icon"></i>
+              <input type="number" id="deleteCount" class="form-input" value="50">
+            </div>
+          </div>
+          <div class="form-item">
+            <label class="form-label">Action Type</label>
+            <div class="input-wrapper">
+              <i data-lucide="filter" class="input-icon"></i>
+              <select id="deleteAction" class="form-select">
+                <option value="trash">Move to Trash</option>
+                <option value="archive">Archive</option>
+                <option value="permanent">Permanent Delete</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-destructive" onclick="deleteNow()" style="min-width: 160px;">
+            <i data-lucide="play" style="width:14px"></i>
+            Run Transaction
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+           <div class="title-with-icon">
+             <i data-lucide="list" class="icon-sm"></i> 
+             <h3 class="card-title">Preview</h3>
+             <span id="previewLoading" style="display:none; margin-left:10px; font-size:12px; color:var(--muted);">⌛ Searching...</span>
+           </div>
+        </div>
+        <div id="previewResults" class="scroll-area"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+           <div class="title-with-icon"><i data-lucide="history" class="icon-sm"></i> <h3 class="card-title">Activity Log</h3></div>
+        </div>
+        <div id="activityLog" class="scroll-area"></div>
+      </div>
+    </div>
   </div>
 
-  <?!= HtmlService.createHtmlOutputFromFile('scripts').getContent(); ?>
+  <script>
+    lucide.createIcons();
+  </script>
+  <?!= include('scripts'); ?>
 </body>
 </html>

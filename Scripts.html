@@ -1,0 +1,137 @@
+<script>
+'use strict';
+
+const DOM = {
+  get: (id) => document.getElementById(id),
+  setText: (id, txt) => { const el = DOM.get(id); if(el) el.textContent = txt; },
+  setHTML: (id, html) => { const el = DOM.get(id); if(el) el.innerHTML = html; },
+  getValue: (id) => DOM.get(id) ? DOM.get(id).value : '',
+  getChecked: (id) => DOM.get(id) ? DOM.get(id).checked : false
+};
+
+const Alert = {
+  show: (id, msg) => {
+    const el = DOM.get(id);
+    if(!el) return;
+    el.querySelector('.alert-message').textContent = msg;
+    el.style.display = 'flex';
+    setTimeout(() => el.style.display = 'none', 5000);
+  },
+  success: (msg) => Alert.show('alertSuccess', msg),
+  error: (msg) => Alert.show('alertError', msg)
+};
+
+async function loadSettings() {
+  google.script.run.withSuccessHandler(conf => {
+    if(!conf) return;
+    DOM.get('daysOld').value = conf.daysOld || 30;
+    DOM.get('searchQuery').value = conf.searchQuery || '';
+    DOM.get('batchSize').value = conf.batchSize || 100;
+    DOM.get('action').value = conf.action || 'trash';
+    DOM.get('enabled').checked = conf.enabled || false;
+    updateToggleStatus(conf.enabled);
+  }).getConfig();
+}
+
+async function saveSettings() {
+  const config = {
+    daysOld: DOM.getValue('daysOld'),
+    searchQuery: DOM.getValue('searchQuery'),
+    batchSize: DOM.getValue('batchSize'),
+    action: DOM.getValue('action'),
+    enabled: DOM.getChecked('enabled')
+  };
+  
+  google.script.run.withSuccessHandler(() => {
+    Alert.success('Settings saved successfully!');
+    updateToggleStatus(config.enabled);
+  }).saveConfig(config);
+}
+
+async function previewEmails() {
+  const query = DOM.getValue('searchQuery');
+  const loader = DOM.get('previewLoading');
+  
+  if(loader) loader.style.display = 'inline';
+  DOM.setHTML('previewResults', '<div style="padding:20px; color:var(--muted);">Analyzing inbox...</div>');
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if(loader) loader.style.display = 'none';
+      if (!res.success) return Alert.error(res.message);
+      
+      if (!res.threads || res.threads.length === 0) {
+        DOM.setHTML('previewResults', '<div style="padding:20px; color:var(--muted);">No matching emails found.</div>');
+      } else {
+        const html = res.threads.map(t => `
+          <div class="list-item" style="border-bottom:1px solid var(--border); padding:12px; background:rgba(255,255,255,0.02);">
+            <div style="font-weight:600; color:var(--foreground); font-size:13px;">${t.from}</div>
+            <div style="color:var(--muted); font-size:12px; margin-top:2px;">${t.subject}</div>
+            <div style="font-size:10px; color:#52525b; margin-top:5px; text-transform:uppercase;">${t.date}</div>
+          </div>
+        `).join('');
+        DOM.setHTML('previewResults', html);
+      }
+    })
+    .withFailureHandler(err => {
+      if(loader) loader.style.display = 'none';
+      Alert.error("Preview failed: " + err);
+    })
+    .previewEmails(query, 15);
+}
+
+async function deleteNow() {
+  const count = DOM.getValue('deleteCount');
+  const action = DOM.getValue('deleteAction');
+  
+  let warningMessage = `Process ${count} emails using current criteria?`;
+  if (action === 'permanent') {
+    warningMessage = `⚠️ CRITICAL WARNING: This will PERMANENTLY DELETE ${count} emails. This bypasses the trash and cannot be undone. Proceed?`;
+  }
+
+  if (!confirm(warningMessage)) return;
+
+  DOM.setText('statsToday', 'Wait...');
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res.success) {
+        Alert.success(res.message);
+        refreshData();
+      } else {
+        Alert.error(res.message);
+      }
+    })
+    .withFailureHandler(err => Alert.error("System Error: " + err))
+    .deleteEmailsNow(count, action);
+}
+
+async function refreshData() {
+  google.script.run.withSuccessHandler(stats => {
+    DOM.setText('statsToday', stats.totalProcessedToday || 0);
+  }).getStats();
+  
+  google.script.run.withSuccessHandler(logs => {
+    const html = logs.map(l => `
+      <div style="padding:8px; border-bottom:1px solid var(--border); font-size:11px;">
+        <span style="color:var(--muted); margin-right:8px;">[${l.timestamp}]</span> 
+        <span style="color:var(--foreground)">${l.message}</span>
+      </div>
+    `).join('');
+    DOM.setHTML('activityLog', html || '<div style="padding:20px; color:var(--muted);">No logs yet.</div>');
+  }).getActivityLogs();
+}
+
+function updateToggleStatus(enabled) {
+  const statusEl = DOM.get('toggleStatus');
+  if(!statusEl) return;
+  statusEl.textContent = enabled ? 'Automation Active' : 'Automation Paused';
+  statusEl.style.color = enabled ? '#22c55e' : '#52525b';
+}
+
+window.onload = () => {
+  loadSettings();
+  refreshData();
+  DOM.get('enabled').addEventListener('change', (e) => updateToggleStatus(e.target.checked));
+};
+</script>
