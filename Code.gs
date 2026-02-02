@@ -17,13 +17,20 @@ function getConfig() {
 
 function saveConfig(config) {
   const props = PropertiesService.getUserProperties();
-  props.setProperty('daysOld', config.daysOld.toString());
-  props.setProperty('searchQuery', config.searchQuery);
-  props.setProperty('batchSize', config.batchSize.toString());
-  props.setProperty('action', config.action);
-  props.setProperty('enabled', config.enabled.toString());
+
+  const daysOld = Number(config.daysOld) || 30;
+  const batchSize = Number(config.batchSize) || 100;
+  const enabled = Boolean(config.enabled);
+
+  props.setProperty('daysOld', String(daysOld));
+  props.setProperty('searchQuery', config.searchQuery || 'older_than:30d');
+  props.setProperty('batchSize', String(batchSize));
+  props.setProperty('action', config.action || 'trash');
+  props.setProperty('enabled', String(enabled));
+
   return { success: true };
 }
+
 
 /**
  * Main cleanup function - runs automatically

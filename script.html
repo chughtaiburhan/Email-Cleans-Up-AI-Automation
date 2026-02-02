@@ -318,20 +318,18 @@ async function loadSettings() {
     Alert.error('Failed to load settings: ' + error);
   }
 }
-
-/**
- * Save settings to server
- */
 async function saveSettings() {
   try {
     Alert.hide();
     
     const config = {
-      daysOld: parseInt(DOM.getValue('daysOld')),
-      searchQuery: DOM.getValue('searchQuery'),
-      action: DOM.getValue('action'),
-      enabled: DOM.getChecked('enabled')
-    };
+  daysOld: parseInt(DOM.getValue('daysOld')),
+  searchQuery: DOM.getValue('searchQuery'),
+  batchSize: parseInt(DOM.getValue('batchSize')), 
+  action: DOM.getValue('action'),
+  enabled: DOM.getChecked('enabled')
+};
+
     
     const frequency = DOM.getValue('frequency');
     

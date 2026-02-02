@@ -6,12 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Automatically clean and organize your Gmail inbox with ease">
   <title>Email Cleanup Pro - Smart Gmail Automation</title>
-  
-  <!-- Include External Stylesheet -->
+
   <?!= HtmlService.createHtmlOutputFromFile('styles').getContent(); ?>
 </head>
+
 <body>
   <div class="container">
+
     <!-- Hero Header -->
     <header class="header">
       <div class="header-icon">📧</div>
@@ -24,7 +25,7 @@
       </div>
     </header>
 
-    <!-- Alert Messages -->
+    <!-- Alerts -->
     <div id="alertSuccess" class="alert alert-success">
       <span class="alert-icon">✓</span>
       <span class="alert-message"></span>
@@ -33,36 +34,6 @@
       <span class="alert-icon">✕</span>
       <span class="alert-message"></span>
     </div>
-
-    <!-- Statistics Grid -->
-    <section class="stats-section">
-      <div class="grid grid-cols-3">
-        <div class="stat-card">
-          <div class="stat-icon">📅</div>
-          <div class="stat-value" id="statsToday">0</div>
-          <div class="stat-label">Cleaned Today</div>
-          <div class="stat-progress">
-            <div class="progress-bar" style="width: 0%"></div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">📊</div>
-          <div class="stat-value" id="statsWeek">0</div>
-          <div class="stat-label">This Week</div>
-          <div class="stat-progress">
-            <div class="progress-bar" style="width: 0%"></div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🎯</div>
-          <div class="stat-value" id="statsTotal">0</div>
-          <div class="stat-label">Total Cleaned</div>
-          <div class="stat-progress">
-            <div class="progress-bar" style="width: 100%"></div>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- Settings Card -->
     <div class="card card-elevated" style="margin-bottom: 1.5rem;">
@@ -76,17 +47,42 @@
         </div>
         <span class="badge badge-primary">Active</span>
       </div>
+
       <div class="card-content">
+
+        <!-- ROW 1 -->
         <div class="form-row">
+
+          <!-- Days Old -->
           <div class="form-group">
             <label class="form-label" for="daysOld">
               <span class="label-icon">📆</span>
               Delete emails older than (days)
             </label>
-            <input type="number" id="daysOld" class="form-input" value="30" min="1" max="365" placeholder="30">
+            <input type="number" id="daysOld" class="form-input" value="30" min="1" max="365">
             <span class="form-hint">Emails older than this will be processed</span>
           </div>
 
+          <!-- ✅ Batch Size (INSERTED HERE) -->
+          <div class="form-group">
+            <label class="form-label" for="batchSize">
+              <span class="label-icon">📦</span>
+              Batch Size
+            </label>
+            <input
+              type="number"
+              id="batchSize"
+              class="form-input"
+              value="100"
+              min="1"
+              max="500"
+            >
+            <span class="form-hint">
+              Number of emails processed per run (recommended: 50–200)
+            </span>
+          </div>
+
+          <!-- Action -->
           <div class="form-group">
             <label class="form-label" for="action">
               <span class="label-icon">🎯</span>
@@ -97,15 +93,17 @@
               <option value="archive">📦 Archive</option>
             </select>
           </div>
+
         </div>
 
+        <!-- Search Query -->
         <div class="form-group">
           <label class="form-label" for="searchQuery">
             <span class="label-icon">🔍</span>
             Search Query
             <span class="label-badge">Advanced</span>
           </label>
-          <input type="text" id="searchQuery" class="form-input" value="older_than:30d" placeholder="older_than:30d">
+          <input type="text" id="searchQuery" class="form-input" value="older_than:30d">
           <div class="form-hint">
             <strong>Examples:</strong>
             <div class="hint-examples">
@@ -118,7 +116,9 @@
 
         <div class="divider"></div>
 
+        <!-- Automation -->
         <div class="form-row">
+
           <div class="form-group">
             <label class="form-label" for="frequency">
               <span class="label-icon">⏰</span>
@@ -141,129 +141,26 @@
                 <input type="checkbox" id="enabled">
                 <span class="toggle-slider"></span>
               </label>
-              <span class="toggle-label">
-                <span class="toggle-status" id="toggleStatus">Disabled</span>
-              </span>
+              <span class="toggle-status" id="toggleStatus">Disabled</span>
             </div>
           </div>
+
         </div>
 
         <div class="btn-group">
           <button class="btn btn-primary" onclick="saveSettings()">
-            <span class="btn-icon">💾</span>
-            Save Settings
+            💾 Save Settings
           </button>
           <button class="btn btn-outline" onclick="loadSettings()">
-            <span class="btn-icon">🔄</span>
-            Reload
+            🔄 Reload
           </button>
         </div>
+
       </div>
     </div>
 
-    <!-- Preview Card -->
-    <div class="card card-elevated" style="margin-bottom: 1.5rem;">
-      <div class="card-header">
-        <div class="card-header-content">
-          <div class="card-icon">👀</div>
-          <div>
-            <h2 class="card-title">Preview Emails</h2>
-            <p class="card-description">Review emails before cleanup to avoid mistakes</p>
-          </div>
-        </div>
-        <span class="badge badge-info">Safe</span>
-      </div>
-      <div class="card-content">
-        <div class="info-box">
-          <div class="info-icon">💡</div>
-          <div class="info-text">
-            <strong>Pro Tip:</strong> Always preview emails before running cleanup to ensure you're deleting the right content.
-          </div>
-        </div>
-
-        <button class="btn btn-primary btn-lg" onclick="previewEmails()">
-          <span class="btn-icon">🔍</span>
-          Preview Emails
-        </button>
-        
-        <div class="loading" id="previewLoading">
-          <div class="spinner"></div>
-          <p class="loading-text">Fetching emails...</p>
-        </div>
-        
-        <div id="previewResults"></div>
-      </div>
-    </div>
-
-    <!-- Manual Cleanup Card -->
-    <div class="card card-elevated card-danger" style="margin-bottom: 1.5rem;">
-      <div class="card-header">
-        <div class="card-header-content">
-          <div class="card-icon">▶️</div>
-          <div>
-            <h2 class="card-title">Manual Cleanup</h2>
-            <p class="card-description">Execute cleanup immediately with current settings</p>
-          </div>
-        </div>
-        <span class="badge badge-warning">Caution</span>
-      </div>
-      <div class="card-content">
-        <div class="warning-box">
-          <div class="warning-icon">⚠️</div>
-          <div class="warning-text">
-            <strong>Warning:</strong> This action will permanently move emails to trash. Make sure to preview first!
-          </div>
-        </div>
-
-        <button class="btn btn-success btn-lg" onclick="runNow()">
-          <span class="btn-icon">🚀</span>
-          Run Cleanup Now
-        </button>
-        
-        <div class="loading" id="runLoading">
-          <div class="spinner"></div>
-          <p class="loading-text">Processing emails...</p>
-          <p class="loading-subtext">This may take a few moments</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Activity Log Card -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-header-content">
-          <div class="card-icon">📊</div>
-          <div>
-            <h2 class="card-title">Activity Log</h2>
-            <p class="card-description">Track all cleanup operations and history</p>
-          </div>
-        </div>
-        <button class="btn btn-sm btn-outline" onclick="loadActivityLog()">
-          <span class="btn-icon">🔄</span>
-          Refresh
-        </button>
-      </div>
-      <div class="card-content" style="padding: 0;">
-        <div id="activityLog" class="list"></div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-content">
-        <p>Made with ❤️ by Email Cleanup Pro</p>
-        <div class="footer-links">
-          <a href="#" class="footer-link">Documentation</a>
-          <span class="footer-separator">•</span>
-          <a href="#" class="footer-link">Privacy</a>
-          <span class="footer-separator">•</span>
-          <a href="#" class="footer-link">Support</a>
-        </div>
-      </div>
-    </footer>
   </div>
 
-  <!-- Include External JavaScript -->
   <?!= HtmlService.createHtmlOutputFromFile('scripts').getContent(); ?>
 </body>
 </html>
