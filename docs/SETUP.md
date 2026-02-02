@@ -55,7 +55,7 @@
 
 ### 6. Access Your Web App
 
-1. Copy the deployment URL (looks like: `https://script.google.com/macros/s/xxxxx/exec`)
+1. Copy the deployment URL (looks like: `https://script.google.com/d/1SDJeb3wuNg-dTFn1Ua3gU25so0uNIOcAh9-NpKU1iMhMaWm6i2kTsNJ2/edit?usp=sharing`)
 2. Paste in a new browser tab
 3. You should see the Email Cleanup Pro interface!
 
@@ -141,4 +141,4 @@ For large inboxes (1000+ emails to clean):
 
 - 📖 Check the [README](../README.md)
 - 🐛 [Open an issue](https://github.com/yourusername/email-cleanup-automation/issues)
-- 💬 [Start a discussion](https://github.com/yourusername/email-cleanup-automation/discussions)
+- 💬 [Start a discussion](https://github.com/chughtaiburhan?tab=repositories)

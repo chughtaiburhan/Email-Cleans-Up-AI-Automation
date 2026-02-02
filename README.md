@@ -101,8 +101,7 @@ This software permanently deletes emails. Always:
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Website: [yourwebsite.com](https://yourwebsite.com)
+- GitHub: [@yourusername](https://github.com/chughtaiburhan)
 
 ## 🙏 Acknowledgments
 
