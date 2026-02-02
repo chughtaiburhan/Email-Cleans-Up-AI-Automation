@@ -51,18 +51,13 @@ function saveConfig(config) {
   });
   return { success: true };
 }
-
 function deleteEmailsNow(count, action) {
   try {
     const config = getConfig();
     const limit = Math.min(parseInt(count) || 50, 500);
     
-    // Logic: If user wants to delete from Trash, we modify the query
-    let query = config.searchQuery;
-    if (action === 'permanent' && !query.includes('in:trash')) {
-       // We search specifically for the items matching criteria that are already in trash
-       // or we search the whole mail to delete permanently.
-    }
+    // Fallback if query is missing
+    let query = config.searchQuery || 'older_than:30d'; 
 
     const threads = GmailApp.search(query, 0, limit);
     
@@ -79,32 +74,25 @@ function deleteEmailsNow(count, action) {
       logActivity(`Archived ${threads.length} emails`, threads.length, 'success');
     } 
     else if (action === 'permanent') {
-      // PERMANENT DELETE LOGIC
-      // This requires the Gmail API Service to be enabled
+      // NOTE: For true permanent delete, you must enable "Gmail API" in Services
+      // This implementation moves to trash as a safe fallback
       threads.forEach(thread => {
-        const messages = thread.getMessages();
-        messages.forEach(msg => {
-          // Gmail.Users.Messages.remove('me', msg.getId()); 
-          // If Gmail API isn't enabled, we use this fallback:
-          GmailApp.moveThreadToTrash(thread); 
-        });
+        thread.moveToTrash();
       });
-      // Note: Truly bypassing trash requires Gmail API. 
-      // For standard GAS, we move to trash then empty trash via query.
-      logActivity(`Permanently deleted ${threads.length} emails`, threads.length, 'danger');
+      logActivity(`Permanently deleted (Moved to Trash) ${threads.length} emails`, threads.length, 'danger');
     }
 
     return { 
       success: true, 
-      message: `Successfully processed ${threads.length} emails (${action}).`, 
+      message: `Successfully processed ${threads.length} emails.`, 
       count: threads.length 
     };
   } catch (e) {
     console.error(e);
-    return { success: false, message: 'Error: ' + e.toString() };
+    // This will send the error back to the browser so you can see it
+    throw new Error(e.toString()); 
   }
 }
-
 function previewEmails(query, limit = 10) {
   try {
     const threads = GmailApp.search(query || 'label:inbox', 0, limit);

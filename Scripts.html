@@ -83,18 +83,22 @@ async function previewEmails() {
 async function deleteNow() {
   const count = DOM.getValue('deleteCount');
   const action = DOM.getValue('deleteAction');
+  const btn = event.currentTarget; // Get the button clicked
   
-  let warningMessage = `Process ${count} emails using current criteria?`;
-  if (action === 'permanent') {
-    warningMessage = `⚠️ CRITICAL WARNING: This will PERMANENTLY DELETE ${count} emails. This bypasses the trash and cannot be undone. Proceed?`;
-  }
+  if (!confirm(`Are you sure you want to ${action} ${count} emails?`)) return;
 
-  if (!confirm(warningMessage)) return;
-
-  DOM.setText('statsToday', 'Wait...');
+  // Visual feedback: Disable button and show loading
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Processing...';
+  if(window.lucide) lucide.createIcons();
 
   google.script.run
     .withSuccessHandler(res => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      if(window.lucide) lucide.createIcons();
+      
       if (res.success) {
         Alert.success(res.message);
         refreshData();
@@ -102,7 +106,12 @@ async function deleteNow() {
         Alert.error(res.message);
       }
     })
-    .withFailureHandler(err => Alert.error("System Error: " + err))
+    .withFailureHandler(err => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      if(window.lucide) lucide.createIcons();
+      Alert.error("System Error: " + err);
+    })
     .deleteEmailsNow(count, action);
 }
 
@@ -126,7 +135,7 @@ function updateToggleStatus(enabled) {
   const statusEl = DOM.get('toggleStatus');
   if(!statusEl) return;
   statusEl.textContent = enabled ? 'Automation Active' : 'Automation Paused';
-  statusEl.style.color = enabled ? '#22c55e' : '#52525b';
+  statusEl.style.color = enabled ? '#22c55e' : 'var(--muted)';
 }
 
 window.onload = () => {
