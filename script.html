@@ -1,0 +1,585 @@
+<script>
+/* =====================================================
+   Email Cleanup Pro - Enhanced JavaScript
+   Modern, Clean, and Maintainable Code
+   ===================================================== */
+
+'use strict';
+
+// ==================== UTILITIES ====================
+
+/**
+ * DOM Manipulation Utilities (DRY Principle)
+ */
+const DOM = {
+  get: (id) => document.getElementById(id),
+  
+  show: (element) => {
+    if (typeof element === 'string') {
+      element = DOM.get(element);
+    }
+    if (element) element.style.display = 'block';
+  },
+  
+  hide: (element) => {
+    if (typeof element === 'string') {
+      element = DOM.get(element);
+    }
+    if (element) element.style.display = 'none';
+  },
+  
+  setText: (id, text) => {
+    const element = DOM.get(id);
+    if (element) element.textContent = text;
+  },
+  
+  setHTML: (id, html) => {
+    const element = DOM.get(id);
+    if (element) element.innerHTML = html;
+  },
+  
+  getValue: (id) => {
+    const element = DOM.get(id);
+    return element ? element.value : null;
+  },
+  
+  setValue: (id, value) => {
+    const element = DOM.get(id);
+    if (element) element.value = value;
+  },
+  
+  setChecked: (id, checked) => {
+    const element = DOM.get(id);
+    if (element) element.checked = checked;
+  },
+  
+  getChecked: (id) => {
+    const element = DOM.get(id);
+    return element ? element.checked : false;
+  }
+};
+
+/**
+ * Alert System with Enhanced Features
+ */
+const Alert = {
+  show: (message, type = 'success') => {
+    const alertId = type === 'success' ? 'alertSuccess' : 'alertError';
+    const alert = DOM.get(alertId);
+    const messageSpan = alert?.querySelector('.alert-message');
+    
+    if (alert && messageSpan) {
+      messageSpan.textContent = message;
+      DOM.show(alert);
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => DOM.hide(alert), 5000);
+      
+      // Add close functionality on click
+      alert.onclick = () => DOM.hide(alert);
+    }
+  },
+  
+  success: (message) => Alert.show(message, 'success'),
+  error: (message) => Alert.show(message, 'error'),
+  
+  hide: () => {
+    DOM.hide('alertSuccess');
+    DOM.hide('alertError');
+  }
+};
+
+/**
+ * Loading State Management
+ */
+const Loading = {
+  show: (id) => DOM.show(id),
+  hide: (id) => DOM.hide(id),
+  
+  showPreview: () => Loading.show('previewLoading'),
+  hidePreview: () => Loading.hide('previewLoading'),
+  
+  showRun: () => Loading.show('runLoading'),
+  hideRun: () => Loading.hide('runLoading')
+};
+
+/**
+ * Format utilities
+ */
+const Format = {
+  number: (num) => {
+    return new Intl.NumberFormat().format(num);
+  },
+  
+  date: (dateString) => {
+    return new Date(dateString).toLocaleDateString();
+  },
+  
+  datetime: (dateString) => {
+    return new Date(dateString).toLocaleString();
+  },
+  
+  truncate: (str, length = 100) => {
+    return str.length > length ? str.substring(0, length) + '...' : str;
+  }
+};
+
+// ==================== STATE MANAGEMENT ====================
+
+/**
+ * Application State
+ */
+const AppState = {
+  config: {
+    daysOld: 30,
+    searchQuery: 'older_than:30d',
+    action: 'trash',
+    enabled: false
+  },
+  
+  stats: {
+    totalProcessedToday: 0,
+    totalProcessedWeek: 0,
+    totalProcessedAll: 0
+  },
+  
+  trigger: {
+    frequency: 'none'
+  },
+  
+  updateConfig: (newConfig) => {
+    AppState.config = { ...AppState.config, ...newConfig };
+  },
+  
+  updateStats: (newStats) => {
+    AppState.stats = { ...AppState.stats, ...newStats };
+  }
+};
+
+// ==================== API CALLS ====================
+
+/**
+ * API wrapper for Google Apps Script calls
+ */
+const API = {
+  call: (functionName, ...args) => {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        [functionName](...args);
+    });
+  },
+  
+  getConfig: () => API.call('getConfig'),
+  saveConfig: (config) => API.call('saveConfig', config),
+  getStats: () => API.call('getStats'),
+  previewEmails: (query, limit) => API.call('previewEmails', query, limit),
+  runCleanup: () => API.call('runCleanupNow'),
+  getActivityLogs: () => API.call('getActivityLogs'),
+  getCurrentTrigger: () => API.call('getCurrentTrigger'),
+  setupTrigger: (frequency) => API.call('setupTrigger', frequency)
+};
+
+// ==================== UI COMPONENTS ====================
+
+/**
+ * Email Preview Component
+ */
+const EmailPreview = {
+  render: (emails) => {
+    if (!emails || emails.length === 0) {
+      return EmailPreview.renderEmpty();
+    }
+    
+    const emailsHTML = emails.map(email => `
+      <div class="list-item">
+        <div class="list-item-title">${Format.truncate(email.subject, 80)}</div>
+        <div class="list-item-meta">
+          <span>📧 ${email.from}</span>
+          <span>📅 ${Format.date(email.date)}</span>
+        </div>
+      </div>
+    `).join('');
+    
+    return `
+      <div style="margin-top: 1rem;">
+        <div style="margin-bottom: 0.75rem;">
+          <span class="badge badge-info">Found ${emails.length} emails</span>
+        </div>
+        <div class="list">${emailsHTML}</div>
+      </div>
+    `;
+  },
+  
+  renderEmpty: () => `
+    <div class="empty-state">
+      <div class="empty-state-icon">📭</div>
+      <p class="empty-state-text">No emails found matching your criteria</p>
+      <p class="empty-state-text" style="margin-top: 0.5rem; font-size: 0.75rem;">
+        Try adjusting your search query or date range
+      </p>
+    </div>
+  `
+};
+
+/**
+ * Activity Log Component
+ */
+const ActivityLog = {
+  render: (logs) => {
+    if (!logs || logs.length === 0) {
+      return ActivityLog.renderEmpty();
+    }
+    
+    return logs.slice(0, 20).map(log => {
+      const icon = log.type === 'error' ? '❌' : log.count > 0 ? '✅' : 'ℹ️';
+      return `
+        <div class="list-item">
+          <div class="list-item-title">${icon} ${log.message}</div>
+          <div class="list-item-meta">
+            <span>🕐 ${Format.datetime(log.timestamp)}</span>
+            ${log.count > 0 ? `<span>📊 ${Format.number(log.count)} emails</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+  
+  renderEmpty: () => `
+    <div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <p class="empty-state-text">No activity yet</p>
+      <p class="empty-state-text" style="margin-top: 0.5rem; font-size: 0.75rem;">
+        Activity will appear here once you start using the automation
+      </p>
+    </div>
+  `
+};
+
+/**
+ * Stats Component
+ */
+const StatsUI = {
+  update: (stats) => {
+    DOM.setText('statsToday', Format.number(stats.totalProcessedToday));
+    DOM.setText('statsWeek', Format.number(stats.totalProcessedWeek));
+    DOM.setText('statsTotal', Format.number(stats.totalProcessedAll));
+    
+    // Update progress bars (visual enhancement)
+    StatsUI.animateProgressBars(stats);
+  },
+  
+  animateProgressBars: (stats) => {
+    const maxValue = Math.max(stats.totalProcessedToday, stats.totalProcessedWeek, stats.totalProcessedAll) || 100;
+    
+    const todayPercent = (stats.totalProcessedToday / maxValue) * 100;
+    const weekPercent = (stats.totalProcessedWeek / maxValue) * 100;
+    const totalPercent = 100;
+    
+    // Animate with delay for visual effect
+    setTimeout(() => {
+      const progressBars = document.querySelectorAll('.progress-bar');
+      if (progressBars[0]) progressBars[0].style.width = `${todayPercent}%`;
+      if (progressBars[1]) progressBars[1].style.width = `${weekPercent}%`;
+      if (progressBars[2]) progressBars[2].style.width = `${totalPercent}%`;
+    }, 100);
+  }
+};
+
+// ==================== CORE FUNCTIONS ====================
+
+/**
+ * Load all settings from server
+ */
+async function loadSettings() {
+  try {
+    const [config, trigger] = await Promise.all([
+      API.getConfig(),
+      API.getCurrentTrigger()
+    ]);
+    
+    // Update UI
+    DOM.setValue('daysOld', config.daysOld);
+    DOM.setValue('searchQuery', config.searchQuery);
+    DOM.setValue('action', config.action);
+    DOM.setChecked('enabled', config.enabled);
+    DOM.setValue('frequency', trigger.frequency);
+    
+    // Update toggle status text
+    updateToggleStatus(config.enabled);
+    
+    // Update state
+    AppState.updateConfig(config);
+    AppState.trigger = trigger;
+    
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    Alert.error('Failed to load settings: ' + error);
+  }
+}
+
+/**
+ * Save settings to server
+ */
+async function saveSettings() {
+  try {
+    Alert.hide();
+    
+    const config = {
+      daysOld: parseInt(DOM.getValue('daysOld')),
+      searchQuery: DOM.getValue('searchQuery'),
+      action: DOM.getValue('action'),
+      enabled: DOM.getChecked('enabled')
+    };
+    
+    const frequency = DOM.getValue('frequency');
+    
+    // Validate
+    if (!config.searchQuery || config.searchQuery.trim() === '') {
+      Alert.error('Search query cannot be empty');
+      return;
+    }
+    
+    if (config.daysOld < 1 || config.daysOld > 365) {
+      Alert.error('Days must be between 1 and 365');
+      return;
+    }
+    
+    // Save config and trigger
+    await Promise.all([
+      API.saveConfig(config),
+      API.setupTrigger(frequency)
+    ]);
+    
+    // Update state
+    AppState.updateConfig(config);
+    
+    // Update toggle status
+    updateToggleStatus(config.enabled);
+    
+    Alert.success('✅ Settings saved successfully!');
+    
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    Alert.error('Failed to save settings: ' + error);
+  }
+}
+
+/**
+ * Load statistics
+ */
+async function loadStats() {
+  try {
+    const stats = await API.getStats();
+    StatsUI.update(stats);
+    AppState.updateStats(stats);
+  } catch (error) {
+    console.error('Error loading stats:', error);
+  }
+}
+
+/**
+ * Preview emails before cleanup
+ */
+async function previewEmails() {
+  try {
+    Alert.hide();
+    Loading.showPreview();
+    DOM.setHTML('previewResults', '');
+    
+    const query = DOM.getValue('searchQuery');
+    
+    if (!query || query.trim() === '') {
+      Alert.error('Please enter a search query');
+      Loading.hidePreview();
+      return;
+    }
+    
+    const result = await API.previewEmails(query, 10);
+    
+    Loading.hidePreview();
+    
+    if (!result.success) {
+      Alert.error(result.message);
+      return;
+    }
+    
+    const html = EmailPreview.render(result.threads);
+    DOM.setHTML('previewResults', html);
+    
+    if (result.total > 0) {
+      Alert.success(`Found ${result.total} emails matching your criteria`);
+    }
+    
+  } catch (error) {
+    Loading.hidePreview();
+    console.error('Error previewing emails:', error);
+    Alert.error('Failed to preview emails: ' + error);
+  }
+}
+
+/**
+ * Run cleanup immediately
+ */
+async function runNow() {
+  const confirmed = confirm(
+    '⚠️ Are you sure you want to run cleanup now?\n\n' +
+    'This will process emails based on your current settings.\n' +
+    'Emails will be moved to trash and can be recovered within 30 days.\n\n' +
+    'Click OK to proceed or Cancel to abort.'
+  );
+  
+  if (!confirmed) return;
+  
+  try {
+    Alert.hide();
+    Loading.showRun();
+    
+    const result = await API.runCleanup();
+    
+    Loading.hideRun();
+    
+    if (result.success) {
+      Alert.success(`✅ ${result.message}`);
+      
+      // Refresh stats and activity log
+      await Promise.all([
+        loadStats(),
+        loadActivityLog()
+      ]);
+    } else {
+      Alert.error(`❌ ${result.message}`);
+    }
+    
+  } catch (error) {
+    Loading.hideRun();
+    console.error('Error running cleanup:', error);
+    Alert.error('Failed to run cleanup: ' + error);
+  }
+}
+
+/**
+ * Load activity log
+ */
+async function loadActivityLog() {
+  try {
+    const logs = await API.getActivityLogs();
+    const html = ActivityLog.render(logs);
+    DOM.setHTML('activityLog', html);
+  } catch (error) {
+    console.error('Error loading activity log:', error);
+    DOM.setHTML('activityLog', ActivityLog.renderEmpty());
+  }
+}
+
+/**
+ * Update toggle status text
+ */
+function updateToggleStatus(enabled) {
+  const statusElement = DOM.get('toggleStatus');
+  if (statusElement) {
+    statusElement.textContent = enabled ? 'Enabled' : 'Disabled';
+    statusElement.style.color = enabled ? 'hsl(var(--success))' : 'hsl(var(--muted-foreground))';
+  }
+}
+
+// ==================== EVENT LISTENERS ====================
+
+/**
+ * Initialize app on page load
+ */
+window.onload = async function() {
+  console.log('Email Cleanup Pro - Initializing...');
+  
+  try {
+    // Load all data in parallel
+    await Promise.all([
+      loadSettings(),
+      loadStats(),
+      loadActivityLog()
+    ]);
+    
+    console.log('Email Cleanup Pro - Ready!');
+    
+    // Add toggle listener
+    const toggleInput = DOM.get('enabled');
+    if (toggleInput) {
+      toggleInput.addEventListener('change', (e) => {
+        updateToggleStatus(e.target.checked);
+      });
+    }
+    
+    // Add search query auto-update
+    const searchQueryInput = DOM.get('searchQuery');
+    const daysOldInput = DOM.get('daysOld');
+    
+    if (daysOldInput && searchQueryInput) {
+      daysOldInput.addEventListener('input', (e) => {
+        const days = e.target.value;
+        if (days > 0) {
+          // Auto-update search query if using default pattern
+          const currentQuery = searchQueryInput.value;
+          if (currentQuery.match(/^older_than:\d+d$/)) {
+            searchQueryInput.value = `older_than:${days}d`;
+          }
+        }
+      });
+    }
+    
+  } catch (error) {
+    console.error('Initialization error:', error);
+    Alert.error('Failed to initialize app. Please refresh the page.');
+  }
+};
+
+/**
+ * Handle keyboard shortcuts
+ */
+document.addEventListener('keydown', (e) => {
+  // Ctrl/Cmd + S to save settings
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveSettings();
+  }
+  
+  // Ctrl/Cmd + P to preview
+  if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+    e.preventDefault();
+    previewEmails();
+  }
+  
+  // Escape to hide alerts
+  if (e.key === 'Escape') {
+    Alert.hide();
+  }
+});
+
+/**
+ * Performance monitoring (optional)
+ */
+if (window.performance && window.performance.timing) {
+  window.addEventListener('load', () => {
+    const loadTime = window.performance.timing.domContentLoadedEventEnd - window.performance.timing.navigationStart;
+    console.log(`Page loaded in ${loadTime}ms`);
+  });
+}
+
+// ==================== EXPORT FOR DEBUGGING ====================
+
+// Make functions available in console for debugging
+window.EmailCleanupPro = {
+  loadSettings,
+  saveSettings,
+  loadStats,
+  previewEmails,
+  runNow,
+  loadActivityLog,
+  API,
+  AppState,
+  DOM,
+  Alert
+};
+
+console.log('💡 Tip: Access EmailCleanupPro object in console for debugging');
+</script>
